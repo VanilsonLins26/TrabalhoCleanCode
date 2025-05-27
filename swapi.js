@@ -4,6 +4,8 @@
 const { ok } = require("assert");
 const http = require("http");
 const https = require("https");
+const fs = require("fs");
+const { getHTML } = require("./util").default;
 
 const cache = {};
 let debug_mode = true;
@@ -261,7 +263,7 @@ function globalError(error){
 
 // Process command line arguments
 const argNumber = 2;
-const args = process.argv.slice(argNumber);
+const args = fs.process.argv.slice(argNumber);
 if (args.includes("--no-debug")) {
     debug_mode = false;
 }
@@ -299,66 +301,19 @@ const server = http.createServer((request, response) => {
 });
 
 function serveIndex(response) {
+    const options = {
+        fetch_count,
+        cache,
+        err_count,
+        debug_mode,
+        timeout
+    };
     response.writeHead(okResponse, { "Content-Type": "text/html" });
-    response.end(getHtml());
+    response.end(getHTML(options));
 }
 
-function getHtml() {
-    return `
-            <!DOCTYPE html>
-            <html>
-                ${getHead}
-                <body>
-                    <h1>Star Wars API Demo</h1>
-                    <p>This page demonstrates fetching data from the Star Wars API.</p>
-                    <button onclick="fetchData()">Fetch Star Wars Data</button>
-                    <div id="results"></div>
-                    <script>
-                        function fetchData() {
-                            document.getElementById("results").innerHTML = "<p>Loading data...</p>";
-                            fetch("/api")
-                                .then(res => res.text())
-                                .then(text => {
-                                    alert("API request made! Check server console.");
-                                    document.getElementById("results").innerHTML = "<p>Data fetched!
-                                     Check server console.</p>";
-                                })
-                                .catch(err => {
-                                    document.getElementById("results").innerHTML = "<p>Error: " + err.message + "</p>";
-                                });
-                        }
-                    </script>
-                    ${getFooter}
-                </body>
-            </html>
-        `;
-};
-
-function getFooter() {
-    return `<div class="footer">
-                        <p>API calls: ${fetch_count} | Cache entries: ${Object.keys(cache).length} 
-                        | Errors: ${err_count}</p>
-                        <pre>Debug mode: ${debug_mode ? "ON" : "OFF"} 
-                        | Timeout: ${timeout}ms</pre>
-                    </div>`;
-};
-
-function getHead() {
-    return `
-    <head>
-                    <title>Star Wars API Demo</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-                        h1 { color: #FFE81F; background-color: #000; padding: 10px; }
-                        button { background-color: #FFE81F; border: none; padding: 10px 20px; cursor: pointer; }
-                        .footer { margin-top: 50px; font-size: 12px; color: #666; }
-                        pre { background: #f4f4f4; padding: 10px; border-radius: 5px; }
-                    </style>
-                </head>
-    `;
-};
 let customPort;
-const PORT = process.env.PORT || customPort;
+const PORT = fs.process.env.PORT || customPort;
 server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/`);
     console.log("Open the URL in your browser and click the button to fetch Star Wars data");
